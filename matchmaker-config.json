@@ -1,0 +1,121 @@
+{
+  "version": "3.3.2",
+  "inspect": true,
+  "max_deployment_retry_count": 3,
+  "profiles": {
+    "controlpoint": {
+      "ticket_expiration_period": "30s",
+      "ticket_removal_period": "1m",
+      "group_inactivity_removal_period": "5m",
+      "application": {
+        "name": "lyra",
+        "version": "YOUR_APP_VERSION"
+      },
+      "rules": {
+        "initial": {
+          "match_size": {
+            "type": "player_count",
+            "attributes": {
+              "team_count": 1,
+              "min_team_size": 2,
+              "max_team_size": 8
+            }
+          },
+          "beacons": {
+            "type": "latencies",
+            "attributes": {
+              "difference": 100,
+              "max_latency": 150
+            }
+          }
+        },
+        "expansions": {
+          "10": {
+            "match_size": {
+              "min_team_size": 1
+            },
+            "beacons": {
+              "max_latency": 250
+            }
+          }
+        }
+      }
+    },
+    "elimination": {
+      "ticket_expiration_period": "30s",
+      "ticket_removal_period": "1m",
+      "group_inactivity_removal_period": "5m",
+      "application": {
+        "name": "lyra",
+        "version": "YOUR_APP_VERSION"
+      },
+      "rules": {
+        "initial": {
+          "match_size": {
+            "type": "player_count",
+            "attributes": {
+              "team_count": 1,
+              "min_team_size": 2,
+              "max_team_size": 8
+            }
+          },
+          "beacons": {
+            "type": "latencies",
+            "attributes": {
+              "difference": 100,
+              "max_latency": 150
+            }
+          }
+        },
+        "expansions": {
+          "10": {
+            "match_size": {
+              "min_team_size": 1
+            },
+            "beacons": {
+              "max_latency": 250
+            }
+          }
+        }
+      }
+    },
+    "topdown": {
+      "ticket_expiration_period": "30s",
+      "ticket_removal_period": "1m",
+      "group_inactivity_removal_period": "5m",
+      "application": {
+        "name": "lyra",
+        "version": "YOUR_APP_VERSION"
+      },
+      "rules": {
+        "initial": {
+          "match_size": {
+            "type": "player_count",
+            "attributes": {
+              "team_count": 1,
+              "min_team_size": 2,
+              "max_team_size": 8
+            }
+          },
+          "beacons": {
+            "type": "latencies",
+            "attributes": {
+              "difference": 100,
+              "max_latency": 150
+            }
+          }
+        },
+        "expansions": {
+          "10": {
+            "match_size": {
+              "min_team_size": 1
+            },
+            "beacons": {
+              "max_latency": 250
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "Edgegap Integration",
+	"Description": "Edgegap matchmaking for Lyra's online hosting flow, Edgegap dedicated server lifecycle, and EOS session fixes for servers hosted on Edgegap.",
+	"Category": "Online",
+	"CreatedBy": "Edgegap",
+	"CreatedByURL": "https://edgegap.com",
+	"DocsURL": "https://docs.edgegap.com/unreal-engine",
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "EdgegapIntegration",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "EdgegapEOSServerConfig",
+			"Type": "Runtime",
+			"LoadingPhase": "EarliestPossible"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "CommonUser",
+			"Enabled": true
+		},
+		{
+			"Name": "OnlineSubsystem",
+			"Enabled": true
+		},
+		{
+			"Name": "OnlineSubsystemUtils",
+			"Enabled": true
+		}
+	]
+}

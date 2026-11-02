@@ -1,0 +1,11 @@
+; Copy to Config/UserEngine.ini in your Lyra project and fill in. Keep it out of git: it holds secrets.
+; It overrides DefaultEngine.ini and is packaged into builds made on your machine.
+
+[/Script/OnlineSubsystemEOS.EOSSettings]
+!Artifacts=ClearArray
++Artifacts=(ArtifactName="LyraEdgegap",ClientId="YOUR_EOS_GAME_CLIENT_ID",ClientSecret="YOUR_EOS_GAME_CLIENT_SECRET",ProductId="YOUR_EOS_PRODUCT_ID",SandboxId="YOUR_EOS_SANDBOX_ID",DeploymentId="YOUR_EOS_DEPLOYMENT_ID",EncryptionKey="64_HEX_CHARACTERS")
+
+[/Script/EdgegapIntegration.EdgegapSessionSubsystem]
+; Quoted: unquoted, Unreal's ini parser cuts the URL at "//".
+MatchmakerUrl="https://YOUR_MATCHMAKER.edgegap.net"
+AuthToken=YOUR_MATCHMAKER_AUTH_TOKEN

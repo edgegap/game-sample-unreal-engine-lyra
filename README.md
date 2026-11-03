@@ -23,6 +23,7 @@ Not verified yet: Browse and Quick Play finding a running match from a second Ep
 | Path | What it is |
 |---|---|
 | `Plugins/EdgegapIntegration/` | The plugin, C++ only, no content assets. |
+| `Plugins/EdgegapSDKBridge/` | Optional, off by default: matchmaking through the [Edgegap SDK for Unreal Engine](https://github.com/edgegap/sdk-unreal-engine). See [Optional: the Edgegap SDK](#optional-the-edgegap-sdk). |
 | `Config/DefaultEngine.Edgegap.ini` | Append to your `Config/DefaultEngine.ini`: server target, EOS (always on), matchmaker settings, playlist → profile map. |
 | `Config/DefaultGame.Edgegap.ini` | Append to your `Config/DefaultGame.ini`: packages `Config/UserEngine.ini`. |
 | `Config/UserEngine.ini.example` | Template for your local secrets. |
@@ -32,7 +33,7 @@ Not verified yet: Browse and Quick Play finding a running match from a second Ep
 ### How the plugin works
 
 - **`UEdgegapSessionSubsystem`** replaces Lyra's `UCommonSessionSubsystem` (CommonUser only creates the base class when no subclass exists). Online `HostSession` measures latency to Edgegap's beacons, sends a matchmaker ticket for the playlist's profile, polls it, and travels to the assigned server. Browse, Join, invites and offline or LAN hosting stay CommonUser's. Lobbies and reservation beacons are off, because Edgegap servers are dedicated servers advertised as EOS sessions. A small overlay shows progress with a Cancel button.
-- **`UEdgegapServerSubsystem`** (dedicated servers only):
+- **`UEdgegapLyraServerSubsystem`** (dedicated servers only):
   - hosts the playlist mapped to the matchmaker profile (`MM_MATCH_PROFILE` → `-Playlist=`, read by Lyra's `ALyraGameMode::HostDedicatedServerMatch`);
   - sets the EOS session's port to `ARBITRIUM_PORT_GAMEPORT_EXTERNAL` (EOS fills in the public IP, but would advertise the internal 7777);
   - on matchmaker deployments, stops the deployment 15 s after the last player leaves, or after 5 min without players.
@@ -112,6 +113,34 @@ Start Lyra (`UnrealEditor.exe <Project>.uproject -game`), press a key to sign in
 - Unattended test: `-EdgegapFindMatch=DA_Convolution_ControlPoint` queues 5 s after the front end loads. It skips Lyra's press-start screen, which then stays over the match, so use it for tests only.
 - Two Epic accounts on one machine: use Epic's Developer Authentication Tool with `-AUTH_TYPE=developer -AUTH_LOGIN=localhost:<port> -AUTH_PASSWORD=<credential name>`.
 
+## Optional: the Edgegap SDK
+
+`EdgegapIntegration` has its own small matchmaker client, so the sample needs nothing else. To use the [Edgegap SDK for Unreal Engine](https://github.com/edgegap/sdk-unreal-engine) instead, turn on the `EdgegapSDKBridge` plugin. It is off by default (`EnabledByDefault: false`), and nothing changes until you do.
+
+With the bridge on:
+- The SDK's matchmaker client does the search: beacon pings (UDP, falling back to TCP), a solo group, polling. Lyra's side stays the same: Start a Game and Quick Play, the playlist → profile map, the overlay with Cancel, travel and the rejoin after the server's map change.
+- Players join with their ticket (`?edgegap_mm_ticket_id=`). On servers the matchmaker starts, the SDK's server module only lets in players whose ticket the matchmaker assigned to that server, one connection per ticket. The built-in client sends its ticket too.
+- The SDK also stops the deployment when the server process exits or crashes.
+
+Verified on Edgegap with UE 5.8.4 and SDK 0.1.0 (2026-11-03): two clients queued through the SDK, were matched onto one server in about 15 s, and joined with their tickets, including the rejoin after the server's map change. A player with no ticket, or with a ticket from another match, was kicked. Known gap: a second player reusing a ticket that is still connected was let in; this is being fixed in the SDK.
+
+Setup:
+1. Copy `Plugin/EdgegapSDK` from [sdk-unreal-engine](https://github.com/edgegap/sdk-unreal-engine) (0.1.0 or later) to your project's `Plugins/EdgegapSDK`, and `Plugins/EdgegapSDKBridge` from this repository to `Plugins/EdgegapSDKBridge`.
+2. In your `.uproject`, add to `Plugins`:
+   ```json
+   { "Name": "EdgegapSDKBridge", "Enabled": true }
+   ```
+3. Rebuild the editor, and rebuild the Linux server (setup step 5) so the server gets the ticket check.
+
+The bridge reuses `MatchmakerUrl`, `AuthToken` and `PortName` from `[/Script/EdgegapIntegration.EdgegapSessionSubsystem]`. The SDK's own settings (Project Settings → Plugins → Edgegap, `EDGEGAP_MM_URL` / `EDGEGAP_MM_TOKEN`, `-EdgegapMMUrl=` / `-EdgegapMMToken=`) win when set.
+
+The ticket check refuses players who join through **Browse** or **Quick Play**, since EOS sessions carry no matchmaker ticket. To keep EOS joins, turn it off in `Config/DefaultGame.ini`:
+
+```ini
+[/Script/EdgegapSDK.EdgegapSettings]
+bRequireMatchmakerTicket=False
+```
+
 ## Configuration
 
 `[/Script/EdgegapIntegration.EdgegapSessionSubsystem]` in `DefaultEngine.ini` / `UserEngine.ini`:
@@ -126,7 +155,7 @@ Start Lyra (`UnrealEditor.exe <Project>.uproject -game`), press a key to sign in
 | `JoinRetryWindowSeconds`, `MaxJoinAttempts` | `60`, `5` | Rejoin when a fresh server drops early joiners (see below). |
 | `bShowStatusOverlay` | `True` | Matchmaking progress overlay. |
 
-`[/Script/EdgegapIntegration.EdgegapServerSubsystem]`: `NoPlayerTimeoutSeconds` (300), `EmptyServerGraceSeconds` (15), `PortName` (`gameport`).
+`[/Script/EdgegapIntegration.EdgegapLyraServerSubsystem]`: `NoPlayerTimeoutSeconds` (300), `EmptyServerGraceSeconds` (15), `PortName` (`gameport`).
 
 ## Pitfalls we hit
 

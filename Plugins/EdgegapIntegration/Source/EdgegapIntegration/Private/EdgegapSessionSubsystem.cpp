@@ -248,6 +248,19 @@ void UEdgegapSessionSubsystem::FindMatch(const FString& Playlist)
 	AssignedAddress.Reset();
 	++SearchId;
 
+	if (IEdgegapMatchmakingBackend* Client = Backend.Get())
+	{
+		if (SearchProfile.IsEmpty())
+		{
+			Fail(FString::Printf(TEXT("No Edgegap matchmaker profile for playlist '%s' and no DefaultProfile"), *Playlist));
+			return;
+		}
+		NotifySessionInformationUpdated(ECommonSessionInformationState::Matchmaking, Playlist);
+		SetMatchmakingState(EEdgegapMatchmakingState::Searching, TEXT("Joining the Edgegap queue..."));
+		Client->StartMatchmaking(SearchProfile, bSendBeaconLatencies);
+		return;
+	}
+
 	// Catch unset or placeholder values here, with a clear message, instead of a confusing HTTP error later.
 	// An unquoted URL in the ini arrives cut to "https:", which also fails this check.
 	const bool bUrlLooksReal = MatchmakerUrl.StartsWith(TEXT("https://")) && MatchmakerUrl.Len() > 12 && !MatchmakerUrl.Contains(TEXT("YOUR_"));
@@ -282,10 +295,48 @@ void UEdgegapSessionSubsystem::CancelMatch()
 		return;
 	}
 	++SearchId;
+	if (IEdgegapMatchmakingBackend* Client = Backend.Get())
+	{
+		Client->CancelMatchmaking();
+	}
 	DeleteTicket();
 	StopPolling();
 	NotifySessionInformationUpdated(ECommonSessionInformationState::OutOfGame);
 	SetMatchmakingState(EEdgegapMatchmakingState::Idle, TEXT("Cancelled"));
+}
+
+void UEdgegapSessionSubsystem::SetMatchmakingBackend(IEdgegapMatchmakingBackend* InBackend)
+{
+	if (MatchmakingState == EEdgegapMatchmakingState::Searching)
+	{
+		CancelMatch();
+	}
+	Backend = InBackend;
+	UE_LOG(LogEdgegapMatchmaker, Log, TEXT("Matchmaking client: %s"), InBackend ? *Backend.GetObject()->GetClass()->GetName() : TEXT("built-in"));
+}
+
+void UEdgegapSessionSubsystem::HandleBackendStatus(const FString& StatusText)
+{
+	if (MatchmakingState == EEdgegapMatchmakingState::Searching)
+	{
+		SetMatchmakingState(EEdgegapMatchmakingState::Searching, StatusText);
+	}
+}
+
+void UEdgegapSessionSubsystem::HandleBackendAssigned(const FString& JoinUrl, const FString& ServerAddress)
+{
+	if (MatchmakingState == EEdgegapMatchmakingState::Searching)
+	{
+		JoinAssignedServer(JoinUrl, ServerAddress);
+	}
+}
+
+void UEdgegapSessionSubsystem::HandleBackendFailed(const FString& Reason)
+{
+	if (MatchmakingState == EEdgegapMatchmakingState::Searching)
+	{
+		Fail(Reason);
+	}
 }
 
 TSharedRef<IHttpRequest, ESPMode::ThreadSafe> UEdgegapSessionSubsystem::MakeRequest(const FString& Verb, const FString& Path) const
@@ -532,10 +583,17 @@ void UEdgegapSessionSubsystem::OnTicketPolled(FHttpRequestPtr Request, FHttpResp
 		*(*Assignment)->GetStringField(TEXT("public_ip")), Port->GetIntegerField(TEXT("external")));
 
 	StopPolling();
-	SetMatchmakingState(EEdgegapMatchmakingState::Connecting, FString::Printf(TEXT("Joining Edgegap server %s..."), *Address));
 	UE_LOG(LogEdgegapMatchmaker, Log, TEXT("Ticket %s assigned to %s"), *TicketId, *Address);
 
-	AssignedAddress = Address;
+	// The ticket goes with the join, for servers that only let matched players in (the Edgegap SDK's ticket check).
+	JoinAssignedServer(FString::Printf(TEXT("%s?edgegap_mm_ticket_id=%s"), *Address, *TicketId), Address);
+}
+
+void UEdgegapSessionSubsystem::JoinAssignedServer(const FString& JoinUrl, const FString& ServerAddress)
+{
+	SetMatchmakingState(EEdgegapMatchmakingState::Connecting, FString::Printf(TEXT("Joining Edgegap server %s..."), *ServerAddress));
+
+	AssignedAddress = JoinUrl;
 	AssignedTime = FPlatformTime::Seconds();
 	JoinAttempts = 0;
 	TravelToAssignedServer();

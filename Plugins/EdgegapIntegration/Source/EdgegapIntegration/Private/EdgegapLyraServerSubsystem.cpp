@@ -1,6 +1,6 @@
 // Copyright Edgegap. All Rights Reserved.
 
-#include "EdgegapServerSubsystem.h"
+#include "EdgegapLyraServerSubsystem.h"
 #include "EdgegapSessionSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -15,7 +15,7 @@
 #include "OnlineSubsystem.h"
 #include "TimerManager.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(EdgegapServerSubsystem)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(EdgegapLyraServerSubsystem)
 
 DEFINE_LOG_CATEGORY_STATIC(LogEdgegapServer, Log, All);
 
@@ -33,19 +33,19 @@ namespace
 	}
 }
 
-bool UEdgegapServerSubsystem::ShouldCreateSubsystem(UObject* Outer) const
+bool UEdgegapLyraServerSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
 	return IsRunningDedicatedServer();
 }
 
-bool UEdgegapServerSubsystem::IsMatchmakerDeployment()
+bool UEdgegapLyraServerSubsystem::IsMatchmakerDeployment()
 {
 	// The matchmaker injects MM_* variables into the deployments it starts.
 	return !FPlatformMisc::GetEnvironmentVariable(TEXT("MM_MATCH_ID")).IsEmpty()
 		|| !FPlatformMisc::GetEnvironmentVariable(TEXT("MM_TICKET_IDS")).IsEmpty();
 }
 
-void UEdgegapServerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+void UEdgegapLyraServerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
@@ -61,10 +61,10 @@ void UEdgegapServerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		*GetJsonStringEnv(TEXT("MM_MATCH_ID")));
 	ApplyMatchmakerPlaylist();
 
-	PostLoginHandle = FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &UEdgegapServerSubsystem::OnPostLogin);
-	LogoutHandle = FGameModeEvents::GameModeLogoutEvent.AddUObject(this, &UEdgegapServerSubsystem::OnLogout);
+	PostLoginHandle = FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &UEdgegapLyraServerSubsystem::OnPostLogin);
+	LogoutHandle = FGameModeEvents::GameModeLogoutEvent.AddUObject(this, &UEdgegapLyraServerSubsystem::OnLogout);
 
-	TWeakObjectPtr<UEdgegapServerSubsystem> WeakThis(this);
+	TWeakObjectPtr<UEdgegapLyraServerSubsystem> WeakThis(this);
 	GetGameInstance()->GetTimerManager().SetTimer(StopTimer, FTimerDelegate::CreateLambda([WeakThis]()
 	{
 		if (WeakThis.IsValid())
@@ -74,7 +74,7 @@ void UEdgegapServerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	}), NoPlayerTimeoutSeconds, false);
 }
 
-void UEdgegapServerSubsystem::Deinitialize()
+void UEdgegapLyraServerSubsystem::Deinitialize()
 {
 	FGameModeEvents::GameModePostLoginEvent.Remove(PostLoginHandle);
 	FGameModeEvents::GameModeLogoutEvent.Remove(LogoutHandle);
@@ -92,7 +92,7 @@ void UEdgegapServerSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-void UEdgegapServerSubsystem::ApplyMatchmakerPlaylist()
+void UEdgegapLyraServerSubsystem::ApplyMatchmakerPlaylist()
 {
 	// A playlist given on the command line wins.
 	FString Existing;
@@ -114,7 +114,7 @@ void UEdgegapServerSubsystem::ApplyMatchmakerPlaylist()
 	UE_LOG(LogEdgegapServer, Log, TEXT("Matchmaker profile '%s' hosts playlist %s"), *Profile, *Playlist);
 }
 
-void UEdgegapServerSubsystem::BindSessionPortFix()
+void UEdgegapLyraServerSubsystem::BindSessionPortFix()
 {
 	const FString PortVariable = FString::Printf(TEXT("ARBITRIUM_PORT_%s_EXTERNAL"), *PortName.ToUpper());
 	ExternalPort = FCString::Atoi(*FPlatformMisc::GetEnvironmentVariable(*PortVariable));
@@ -131,10 +131,10 @@ void UEdgegapServerSubsystem::BindSessionPortFix()
 	}
 
 	CreateSessionHandle = Sessions->AddOnCreateSessionCompleteDelegate_Handle(
-		FOnCreateSessionCompleteDelegate::CreateUObject(this, &UEdgegapServerSubsystem::OnSessionCreated));
+		FOnCreateSessionCompleteDelegate::CreateUObject(this, &UEdgegapLyraServerSubsystem::OnSessionCreated));
 }
 
-void UEdgegapServerSubsystem::OnSessionCreated(FName SessionName, bool bWasSuccessful)
+void UEdgegapLyraServerSubsystem::OnSessionCreated(FName SessionName, bool bWasSuccessful)
 {
 	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
 	IOnlineSessionPtr Sessions = OnlineSubsystem ? OnlineSubsystem->GetSessionInterface() : nullptr;
@@ -152,18 +152,18 @@ void UEdgegapServerSubsystem::OnSessionCreated(FName SessionName, bool bWasSucce
 	UE_LOG(LogEdgegapServer, Log, TEXT("Session %s advertises Edgegap port %d"), *SessionName.ToString(), ExternalPort);
 }
 
-void UEdgegapServerSubsystem::OnPostLogin(AGameModeBase* GameMode, APlayerController* NewPlayer)
+void UEdgegapLyraServerSubsystem::OnPostLogin(AGameModeBase* GameMode, APlayerController* NewPlayer)
 {
 	GetGameInstance()->GetTimerManager().ClearTimer(StopTimer);
 }
 
-void UEdgegapServerSubsystem::OnLogout(AGameModeBase* GameMode, AController* Exiting)
+void UEdgegapLyraServerSubsystem::OnLogout(AGameModeBase* GameMode, AController* Exiting)
 {
 	// The leaving controller still counts at this point, so check again once it is gone.
-	GetGameInstance()->GetTimerManager().SetTimer(StopTimer, this, &UEdgegapServerSubsystem::CheckEmptyServer, EmptyServerGraceSeconds, false);
+	GetGameInstance()->GetTimerManager().SetTimer(StopTimer, this, &UEdgegapLyraServerSubsystem::CheckEmptyServer, EmptyServerGraceSeconds, false);
 }
 
-void UEdgegapServerSubsystem::CheckEmptyServer()
+void UEdgegapLyraServerSubsystem::CheckEmptyServer()
 {
 	UWorld* World = GetGameInstance()->GetWorld();
 	AGameModeBase* GameMode = World ? World->GetAuthGameMode() : nullptr;
@@ -174,7 +174,7 @@ void UEdgegapServerSubsystem::CheckEmptyServer()
 	}
 }
 
-void UEdgegapServerSubsystem::StopDeployment(const FString& Reason)
+void UEdgegapLyraServerSubsystem::StopDeployment(const FString& Reason)
 {
 	if (bStopRequested)
 	{

@@ -3,7 +3,9 @@
 #pragma once
 
 #include "CommonSessionSubsystem.h"
+#include "EdgegapMatchmakingBackend.h"
 #include "Interfaces/IHttpRequest.h"
+#include "UObject/WeakInterfacePtr.h"
 #include "EdgegapSessionSubsystem.generated.h"
 
 class SWidget;
@@ -88,6 +90,17 @@ public:
 	/** Playlist for a matchmaker profile, or empty (the server then hosts Lyra's default playlist). */
 	FString GetPlaylistForProfile(const FString& Profile) const;
 
+	/** Finds matches through another client instead of the built-in one. nullptr: back to the built-in client. */
+	void SetMatchmakingBackend(IEdgegapMatchmakingBackend* Backend);
+
+	/** Progress text from the backend while it searches. */
+	void HandleBackendStatus(const FString& StatusText);
+
+	/** The backend got a server. JoinUrl is "ip:port[?options]", ServerAddress "ip:port" for display. */
+	void HandleBackendAssigned(const FString& JoinUrl, const FString& ServerAddress);
+
+	void HandleBackendFailed(const FString& Reason);
+
 	/** Routes online hosting through the Edgegap matchmaker. Off: Lyra's original listen-server hosting. */
 	UPROPERTY(Config)
 	bool bEnableMatchmaking = false;
@@ -155,6 +168,7 @@ private:
 	void SetMatchmakingState(EEdgegapMatchmakingState NewState, const FString& NewStatusText);
 
 	void OnPostLoadMapForMatchmaking(UWorld* LoadedWorld);
+	void JoinAssignedServer(const FString& JoinUrl, const FString& ServerAddress);
 	void TravelToAssignedServer();
 	void ShowStatusOverlay();
 	void HideStatusOverlay();
@@ -176,4 +190,5 @@ private:
 	bool bAutoQueued = false;
 	FDelegateHandle PostLoadMapHandle;
 	TSharedPtr<SWidget> StatusOverlay;
+	TWeakInterfacePtr<IEdgegapMatchmakingBackend> Backend;
 };

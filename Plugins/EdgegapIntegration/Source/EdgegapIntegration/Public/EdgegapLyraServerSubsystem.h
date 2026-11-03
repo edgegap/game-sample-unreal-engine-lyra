@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Subsystems/GameInstanceSubsystem.h"
-#include "EdgegapServerSubsystem.generated.h"
+#include "EdgegapLyraServerSubsystem.generated.h"
 
 class AController;
 class AGameModeBase;
@@ -21,10 +21,10 @@ class APlayerController;
  * - Lifecycle: a matchmaker-started server stops its deployment once the match is empty, or if
  *   nobody joins in time, so idle servers don't keep billing. Servers deployed by hand are left alone.
  *
- * Optional tuning in DefaultEngine.ini under [/Script/EdgegapIntegration.EdgegapServerSubsystem].
+ * Optional tuning in DefaultEngine.ini under [/Script/EdgegapIntegration.EdgegapLyraServerSubsystem].
  */
 UCLASS(Config=Engine)
-class EDGEGAPINTEGRATION_API UEdgegapServerSubsystem : public UGameInstanceSubsystem
+class EDGEGAPINTEGRATION_API UEdgegapLyraServerSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 

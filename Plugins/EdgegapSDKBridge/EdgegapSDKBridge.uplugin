@@ -1,0 +1,32 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "Edgegap SDK for Lyra",
+	"Description": "Optional: Lyra's Edgegap matchmaking through the Edgegap SDK for Unreal Engine (github.com/edgegap/sdk-unreal-engine) instead of the built-in client. Needs Plugins/EdgegapSDK.",
+	"Category": "Online",
+	"CreatedBy": "Edgegap",
+	"CreatedByURL": "https://edgegap.com",
+	"DocsURL": "https://github.com/edgegap/sdk-unreal-engine#readme",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"Installed": false,
+	"EnabledByDefault": false,
+	"Modules": [
+		{
+			"Name": "EdgegapSDKBridge",
+			"Type": "ClientOnly",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "EdgegapIntegration",
+			"Enabled": true
+		},
+		{
+			"Name": "EdgegapSDK",
+			"Enabled": true
+		}
+	]
+}

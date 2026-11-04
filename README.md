@@ -1,5 +1,7 @@
 # Lyra on Edgegap, with Epic Online Services
 
+![Add Edgegap matchmaking and dedicated game servers to Epic's Lyra Starter Game in Unreal Engine, with Epic Online Services sessions.](docs/images/card.jpg)
+
 Host Epic's [Lyra Starter Game](https://dev.epicgames.com/documentation/en-us/unreal-engine/lyra-sample-game-in-unreal-engine) (Unreal Engine 5.8) on [Edgegap](https://edgegap.com) dedicated servers, with sessions and Epic account login on Epic Online Services (EOS).
 
 - **Start a Game** (Online) no longer makes the player a listen server. It asks the Edgegap matchmaker for a server near the players, Edgegap starts a dedicated server, and the player joins it.

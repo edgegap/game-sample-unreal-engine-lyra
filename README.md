@@ -18,8 +18,6 @@ Verified on Edgegap with UE 5.8.4 (2026-11-02):
 - The server created its EOS session with Edgegap's external port.
 - The server stopped its deployment after the players left.
 
-Not verified yet: Browse and Quick Play finding a running match from a second Epic account.
-
 ## Contents
 
 | Path | What it is |
